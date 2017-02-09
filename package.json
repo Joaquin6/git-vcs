@@ -1,0 +1,56 @@
+{
+  "name": "hookers",
+  "version": "1.0.0",
+  "description": "Git hooks made easy",
+  "main": "index.js",
+  "devDependencies": {
+    "expect": "^1.20.2",
+    "mocha": "^3.2.0",
+    "mock-fs": "^3.12.1",
+    "rimraf": "^2.2.8",
+    "standard": "^8.6.0"
+  },
+  "dependencies": {
+    "chalk": "^1.1.3",
+    "find-parent-dir": "^0.3.0",
+    "is-ci": "^1.0.9",
+    "normalize-path": "^1.0.0"
+  },
+  "scripts": {
+    "install": "node ./bin/install.js",
+    "precommit": "npm test",
+    "test": "mocha && standard",
+    "uninstall": "node ./bin/uninstall.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Joaquin6/hookers.git"
+  },
+  "keywords": [
+    "git",
+    "git-hooks",
+    "hook",
+    "hooks",
+    "pre-commit",
+    "precommit",
+    "post-commit",
+    "postcommit",
+    "pre-push",
+    "prepush",
+    "post-merge",
+    "postmerge",
+    "test",
+    "version-control"
+  ],
+  "author": "Joaquin Briceno <joaquinbriceno1@gmail.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Joaquin6/hookers/issues"
+  },
+  "homepage": "https://github.com/Joaquin6/hookers#readme",
+  "standard": {
+    "env": {
+      "mocha": true
+    }
+  }
+}
