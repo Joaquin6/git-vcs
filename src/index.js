@@ -179,10 +179,9 @@ function createHook(hookersDir, gitHooksDir, hookName, cmd) {
 }
 
 function removeHook(dir, name) {
-	var filename = dir + '/' + name
-
+	var filename = dir + '/' + name;
 	if (fs.existsSync(filename) && isHooker(filename)) {
-		fs.unlinkSync(dir + '/' + name)
+		fs.unlinkSync(dir + '/' + name);
 	}
 }
 
@@ -213,18 +212,17 @@ function installFrom(hookersDir) {
 
 function uninstallFrom(hookersDir) {
 	try {
-		var gitHooksDir = findHooksDir(hookersDir)
-
+		var gitHooksDir = findHooksDir(hookersDir);
 		hooks.forEach(function(hookName) {
-			removeHook(gitHooksDir, hookName)
-		})
-		console.log('done\n')
+			removeHook(gitHooksDir, hookName);
+		});
+		console.log('done\n');
 	} catch (e) {
-		console.error(e)
+		console.error(e);
 	}
 }
 
 module.exports = {
 	installFrom: installFrom,
 	uninstallFrom: uninstallFrom
-}
+};
