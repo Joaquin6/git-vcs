@@ -1,10 +1,10 @@
 // Run when package is uninstalled
-var path = require('path')
-var chalk = require('chalk')
-var husky = require('../src/')
+var path = require('path');
+var chalk = require('chalk');
+var hookers = require('../src/');
 
-console.log(chalk.cyan.underline('husky'))
-console.log('uninstalling')
+console.log(chalk.cyan.underline('hookers'));
+console.log('uninstalling');
 
-var huskyDir = path.join(__dirname, '..')
-husky.uninstallFrom(huskyDir)
+var hookersDir = path.join(__dirname, '..');
+hookers.uninstallFrom(hookersDir);
