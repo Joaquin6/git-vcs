@@ -1,6 +1,6 @@
 {
   "name": "hookers",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Git hooks made easy",
   "main": "index.js",
   "devDependencies": {
