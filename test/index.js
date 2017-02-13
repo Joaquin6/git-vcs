@@ -1,135 +1,137 @@
-var fs = require('fs')
-var path = require('path')
-var expect = require('expect')
-var mock = require('mock-fs')
-var hookers = require('../src')
+var fs = require('fs');
+var path = require('path');
+var expect = require('expect');
+var mock = require('mock-fs');
+var hookers = require('../src');
 
-var gitDir = '/.git'
+var gitDir = '/.git';
 
-function readHook (hookPath) {
-  return fs.readFileSync(path.join(gitDir, hookPath), 'utf-8')
+function readHook(hookPath) {
+	return fs.readFileSync(path.join(gitDir, hookPath), 'utf-8');
 }
 
-function exists (hookPath) {
-  return fs.existsSync(path.join(gitDir, hookPath))
+function exists(hookPath) {
+	return fs.existsSync(path.join(gitDir, hookPath));
 }
 
-describe('hookers', function () {
-  afterEach(function () {
-    mock.restore()
-  })
+describe('hookers', function() {
+	afterEach(function() {
+		mock.restore();
+	});
 
-  it('should support basic layout', function () {
-    mock({
-      '/.git/hooks': {},
-      '/node_modules/hookers': {}
-    })
+	it('should support basic layout', function() {
+		mock({
+			'/.git/hooks': {},
+			'/node_modules/hookers': {}
+		});
 
-    hookers.installFrom('/node_modules/hookers')
-    var hook = readHook('hooks/pre-commit')
+		hookers.installFrom('/node_modules/hookers');
+		var hook = readHook('hooks/pre-commit');
 
-    expect(hook).toInclude('#hookers')
-    expect(hook).toInclude('cd .')
-    expect(hook).toInclude('npm run precommit')
+		expect(hook).toInclude('#hookers');
+		expect(hook).toInclude('cd .');
+		expect(hook).toInclude('npm run precommit');
 
-    hookers.uninstallFrom('/node_modules/hookers')
-    expect(exists('hooks/pre-push')).toBeFalsy()
-  })
+		hookers.uninstallFrom('/node_modules/hookers');
+		expect(exists('hooks/pre-push')).toBeFalsy();
+	});
 
-  it('should support project installed in sub directory', function () {
-    mock({
-      '/.git/hooks': {},
-      '/A/B/node_modules/hookers': {}
-    })
+	it('should support project installed in sub directory', function() {
+		mock({
+			'/.git/hooks': {},
+			'/A/B/node_modules/hookers': {}
+		});
 
-    hookers.installFrom('/A/B/node_modules/hookers')
-    var hook = readHook('hooks/pre-commit')
+		hookers.installFrom('/A/B/node_modules/hookers');
+		var hook = readHook('hooks/pre-commit');
 
-    expect(hook).toInclude('cd A/B')
+		expect(hook).toInclude('cd A/B');
 
-    hookers.uninstallFrom('/A/B/node_modules/hookers')
-    expect(exists('hooks/pre-push')).toBeFalsy()
-  })
+		hookers.uninstallFrom('/A/B/node_modules/hookers');
+		expect(exists('hooks/pre-push')).toBeFalsy();
+	});
 
-  it('should support git submodule', function () {
-    mock({
-      '/.git/modules/A/B': {},
-      '/A/B/.git': 'git: ../../.git/modules/A/B',
-      '/A/B/node_modules/hookers': {}
-    })
+	it('should support git submodule', function() {
+		mock({
+			'/.git/modules/A/B': {},
+			'/A/B/.git': 'git: ../../.git/modules/A/B',
+			'/A/B/node_modules/hookers': {}
+		});
 
-    hookers.installFrom('/A/B/node_modules/hookers')
-    var hook = readHook('modules/A/B/hooks/pre-commit')
+		hookers.installFrom('/A/B/node_modules/hookers');
+		var hook = readHook('modules/A/B/hooks/pre-commit');
 
-    expect(hook).toInclude('cd .')
+		expect(hook).toInclude('cd .');
 
-    hookers.uninstallFrom('/A/B/node_modules/hookers')
-    expect(exists('hooks/pre-push')).toBeFalsy()
-  })
+		hookers.uninstallFrom('/A/B/node_modules/hookers');
+		expect(exists('hooks/pre-push')).toBeFalsy();
+	});
 
-  it('should support git submodule and sub directory', function () {
-    mock({
-      '/.git/modules/A/B': {},
-      '/A/B/.git': 'git: ../../.git/modules/A/B',
-      '/A/B/C/node_modules/hookers': {}
-    })
+	it('should support git submodule and sub directory', function() {
+		mock({
+			'/.git/modules/A/B': {},
+			'/A/B/.git': 'git: ../../.git/modules/A/B',
+			'/A/B/C/node_modules/hookers': {}
+		});
 
-    hookers.installFrom('/A/B/C/node_modules/hookers')
-    var hook = readHook('modules/A/B/hooks/pre-commit')
+		hookers.installFrom('/A/B/C/node_modules/hookers');
+		var hook = readHook('modules/A/B/hooks/pre-commit');
 
-    expect(hook).toInclude('cd C')
+		expect(hook).toInclude('cd C');
 
-    hookers.uninstallFrom('/A/B/app/node_modules/hookers')
-    expect(exists('hooks/pre-push')).toBeFalsy()
-  })
+		hookers.uninstallFrom('/A/B/app/node_modules/hookers');
+		expect(exists('hooks/pre-push')).toBeFalsy();
+	});
 
-  it('should not modify user hooks', function () {
-    mock({
-      '/.git/hooks': {},
-      '/.git/hooks/pre-push': 'foo',
-      '/node_modules/hookers': {}
-    })
+	it('should not modify user hooks', function() {
+		mock({
+			'/.git/hooks': {},
+			'/.git/hooks/pre-push': 'foo',
+			'/node_modules/hookers': {}
+		});
 
-    // Verify that it's not overwritten
-    hookers.installFrom('/node_modules/hookers')
-    var hook = readHook('hooks/pre-push')
-    expect(hook).toBe('foo')
+		// Verify that it's not overwritten
+		hookers.installFrom('/node_modules/hookers');
+		var hook = readHook('hooks/pre-push');
+		expect(hook).toBe('foo');
 
-    hookers.uninstallFrom('/node_modules/hookers')
-    expect(exists('hooks/pre-push')).toBeTruthy()
-  })
+		hookers.uninstallFrom('/node_modules/hookers');
+		expect(exists('hooks/pre-push')).toBeTruthy();
+	});
 
-  it('should not install from /node_modules/A/node_modules', function () {
-    mock({
-      '/.git/hooks': {},
-      '/node_modules/A/node_modules/hookers': {}
-    })
+	it('should not install from /node_modules/A/node_modules', function() {
+		mock({
+			'/.git/hooks': {},
+			'/node_modules/A/node_modules/hookers': {}
+		});
 
-    hookers.installFrom('/node_modules/A/node_modules/hookers')
-    expect(exists('hooks/pre-push')).toBeFalsy()
-  })
+		hookers.installFrom('/node_modules/A/node_modules/hookers');
+		expect(exists('hooks/pre-push')).toBeFalsy();
+	});
 
-  it('should not crash if there\'s no .git directory', function () {
-    mock({
-      '/node_modules/hookers': {}
-    })
+	it('should not crash if there\'s no .git directory', function() {
+		mock({
+			'/node_modules/hookers': {}
+		});
 
-    expect(function () { hookers.installFrom('/node_modules/hookers') })
-      .toNotThrow()
+		expect(function() {
+			hookers.installFrom('/node_modules/hookers');
+		}).toNotThrow();
 
-    expect(function () { hookers.uninstallFrom('/node_modules/hookers') })
-      .toNotThrow()
-  })
+		expect(function() {
+			hookers.uninstallFrom('/node_modules/hookers');
+		}).toNotThrow();
+	});
 
-  it('should migrate ghooks scripts', function () {
-    mock({
-      '/.git/hooks/pre-commit': '// Generated by ghooks. Do not edit this file.',
-      '/node_modules/hookers': {}
-    })
+	it('should migrate ghooks scripts', function() {
+		mock({
+			'/.git/hooks/pre-commit': '// Generated by ghooks. Do not edit this file.',
+			'/node_modules/hookers': {}
+		});
 
-    hookers.installFrom('/node_modules/hookers')
-    var hook = readHook('hooks/pre-commit')
-    expect(hook).toInclude('hookers')
-    expect(hook).toNotInclude('ghooks')
-  })
-})
+		hookers.installFrom('/node_modules/hookers');
+		var hook = readHook('hooks/pre-commit');
+		expect(hook).toInclude('hookers');
+		expect(hook).toNotInclude('ghooks');
+	});
+});
