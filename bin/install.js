@@ -2,9 +2,9 @@
 var path = require('path');
 var chalk = require('chalk');
 var isCI = require('is-ci');
-var hookers = require('../src/');
+var gitvcs = require('../src/');
 
-console.log(chalk.cyan.underline('hookers'));
+console.log(chalk.cyan.underline('git-vcs'));
 
 if (isCI) {
 	console.log('CI detected, skipping Git hooks installation');
@@ -13,5 +13,5 @@ if (isCI) {
 
 console.log('setting up hooks');
 
-var hookersDir = path.join(__dirname, '..');
-hookers.installFrom(hookersDir);
+var gitvcsDir = path.join(__dirname, '..');
+gitvcs.installFrom(gitvcsDir);

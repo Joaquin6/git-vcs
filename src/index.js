@@ -10,7 +10,7 @@ function write(filename, data) {
 	fs.chmodSync(filename, parseInt('0755', 8));
 }
 
-function isHooker(filename) {
+function isGitvcsHook(filename) {
 	var data = fs.readFileSync(filename, 'utf-8')
 	return data.indexOf('#husky') !== -1
 }
@@ -23,16 +23,16 @@ function isGhooks(filename) {
 /**
  * Finds the Parent's Root Directory and verifies if
  * its a git repo. If so, it returns the path to git's
- * hooks directory.
+ * git-vcs directory.
  * @param   {[type]}  dirname  [description]
  * @return  {[type]}           [description]
  */
-function findHooksDir(dirname) {
-	var dir = findParentDir.sync(dirname, '.git');
-	if (dir) {
-		var gitDir = path.join(dir, '.git');
-		var stats = fs.lstatSync(gitDir);
-		if (stats.isFile()) {
+ function findHooksDir(dirname) {
+ 	var dir = findParentDir.sync(dirname, '.git');
+ 	if (dir) {
+ 		var gitDir = path.join(dir, '.git');
+ 		var stats = fs.lstatSync(gitDir);
+ 		if (stats.isFile()) {
 			// Expect following format
 			// git: pathToGit
 			gitDir = fs.readFileSync(gitDir, 'utf-8').split(':')[1].trim();
@@ -48,25 +48,25 @@ function getHookScript(hookName, relativePath, cmd) {
 
 	// Hook script
 	var arr = [
-		'#!/bin/sh',
-		'#hookers ' + pkg.version,
-		'',
-		'command_exists () {',
-		'  command -v "$1" >/dev/null 2>&1',
-		'}',
-		'',
+	'#!/bin/sh',
+	'#git-vcs ' + pkg.version,
+	'',
+	'command_exists () {',
+	'  command -v "$1" >/dev/null 2>&1',
+	'}',
+	'',
 
-		'load_nvm () {',
-		'  export $1=$2',
-		'  [ -s "$1/nvm.sh" ] && . $1/nvm.sh',
-		'  exists nvm && [ -f .nvmrc ] && nvm use',
-		'}',
-		'',
+	'load_nvm () {',
+	'  export $1=$2',
+	'  [ -s "$1/nvm.sh" ] && . $1/nvm.sh',
+	'  exists nvm && [ -f .nvmrc ] && nvm use',
+	'}',
+	'',
 
-		'has_hook_script () {',
-		'  [ -f package.json ] && cat package.json | grep -q "\\"$1\\"[[:space:]]*:"',
-		'}',
-		''
+	'has_hook_script () {',
+	'  [ -f package.json ] && cat package.json | grep -q "\\"$1\\"[[:space:]]*:"',
+	'}',
+	''
 	];
 
 	arr = arr.concat([
@@ -74,7 +74,7 @@ function getHookScript(hookName, relativePath, cmd) {
 		'',
 		'has_hook_script ' + cmd + ' || exit 0',
 		''
-	]);
+		]);
 
 	// On OS X and Linux, try to use nvm if it's installed
 	if (process.platform !== 'win32') {
@@ -88,27 +88,27 @@ function getHookScript(hookName, relativePath, cmd) {
 			// for GUI apps
 			arr = arr.concat([
 				'export PATH=$PATH:/usr/local/bin:/usr/local'
-			]);
+				]);
 		}
 
 		if (process.platform === 'darwin') {
 			arr = arr.concat([
 				'command_exists npm || load_nvm BREW_NVM_DIR /usr/local/opt/nvm',
 				''
-			]);
+				]);
 		}
 
 		arr = arr.concat([
 			'command_exists npm || load_nvm NVM_DIR ' + home + '/.nvm',
 			''
-		]);
+			]);
 	} else {
 		// Add
 		// Node standard installation path /c/Program Files/nodejs
 		// for GUI apps
 		arr = arr.concat([
 			'export PATH="$PATH:/c/Program Files/nodejs"'
-		]);
+			]);
 	}
 
 	// Can't find npm message
@@ -136,7 +136,7 @@ function getHookScript(hookName, relativePath, cmd) {
 		'  exit 1',
 		'}',
 		''
-	]);
+		]);
 
 	return arr.join('\n');
 }
@@ -171,7 +171,7 @@ function createHook(hookersDir, gitHooksDir, hookName, cmd) {
 		return write(filename, hookScript);
 	}
 
-	if (isHooker(filename)) {
+	if (isGitvcsHook(filename)) {
 		return write(filename, hookScript);
 	}
 
@@ -180,7 +180,7 @@ function createHook(hookersDir, gitHooksDir, hookName, cmd) {
 
 function removeHook(dir, name) {
 	var filename = dir + '/' + name;
-	if (fs.existsSync(filename) && isHooker(filename)) {
+	if (fs.existsSync(filename) && isGitvcsHook(filename)) {
 		fs.unlinkSync(dir + '/' + name);
 	}
 }
@@ -192,7 +192,7 @@ function installFrom(hookersDir) {
 			return console.log(
 				'Trying to install from sub \'node_module\' directory,',
 				'skipping Git hooks installation'
-			);
+				);
 		}
 
 		var gitHooksDir = findHooksDir(hookersDir);
