@@ -1,4 +1,4 @@
-# hookers
+# Git-VCS
 A Git Hooks and Alias Node.js package with the goal to aid the version control process.
 
 In development. Coming Soon!
