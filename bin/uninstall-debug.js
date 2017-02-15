@@ -7,4 +7,4 @@ console.log(chalk.cyan.underline('git-vcs'));
 console.log('Uninstalling Git-VCS Hooks and Aliases\n');
 
 var gitvcsDir = path.join(__dirname, '..');
-gitvcs.uninstallFrom(gitvcsDir, false);
+gitvcs.uninstallFrom(gitvcsDir, true);
