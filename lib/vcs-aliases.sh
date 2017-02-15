@@ -10,6 +10,9 @@ git config --remove-section alias
 
 # Set a bunch of aliases
 
+# Since I often edit aliases by hand, I have one that opens the gitconfig file with my default editor.
+git config alias.ec 'config --global -e'
+
 # Get my working directory up to date.
 # When I’m ready to start some work, I always do the work in a new branch.
 # But first, I make sure that my working directory is up to date with the origin

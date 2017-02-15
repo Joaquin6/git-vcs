@@ -7,6 +7,14 @@ var findParentDir = require('find-parent-dir');
 var aliases = require('./aliases.json');
 var hooks = require('./hooks.json');
 var pkg = require('../package.json');
+var debugMode = false;
+
+function confirmDebugMode(isDebug) {
+	if (isDebug) {
+		debugMode = true;
+		console.log(chalk.yellow("Enabled Debug Mode"));
+	}
+}
 
 function write(filename, data) {
 	fs.writeFileSync(filename, data);
@@ -65,8 +73,20 @@ function findAliases(dirname) {
 			// git: pathToGit
 
 			gitConfig = fs.readFileSync(gitConfig, 'utf-8');
-			if (gitConfig.includes("[alias]"))
-				return gitConfig.split('[alias]')[1].trim();
+			if (gitConfig.includes("[alias]")) {
+				var aliases = gitConfig.split('[alias]')[1].trim();
+				/** Check if The [alias] section is not empty */
+				if (aliases) {
+					return aliases;
+				} else {
+					/**
+					 * [alias] section is empty, therefore remove it.
+					 * If we dont do this, `.git/config` will begin to
+					 * stack multiple empty [alias] sections.
+					 */
+					removeAliasSection(dirname);
+				}
+			}
 			return "No Alias Section Found";
 		}
 	}
@@ -173,10 +193,14 @@ function getHookScript(hookName, relativePath, cmd) {
 }
 
 function createHook(hookersDir, gitHooksDir, hookName, cmd) {
-	var filename = path.join(gitHooksDir, hookName)
+	var filename = path.join(gitHooksDir, hookName);
 
 	// Assuming that this file is in node_modules/hookers
 	var packageDir = path.join(hookersDir, '..', '..');
+	// If in debugMode, then reapply the packageDir value to local
+	if (debugMode) {
+		packageDir = path.join(hookersDir);
+	}
 
 	// Get project directory
 	// When used in submodule, the project dir is the first .git that is found
@@ -206,25 +230,19 @@ function createHook(hookersDir, gitHooksDir, hookName, cmd) {
 		return write(filename, hookScript);
 	}
 
-	console.log('Skipping ' + hookName + ' hook (existing user hook)');
+	console.log('Skipping Hook: ' + chalk.cyan(hookName) + ' (existing user hook)');
 }
 
 function createAlias(hookersDir, aliasName) {
-	// Assuming that this file is in node_modules/git-vcs
-	// var packageDir = path.join(hookersDir);
-	var packageDir = path.join(hookersDir, '..', '..');
-	// Get project directory
-	// When used in submodule, the project dir is the first .git that is found
-	var projectDir = findParentDir.sync(hookersDir, '.git');
-	// In order to support projects with package.json in a different directory
-	// than .git, find relative path from project directory to package.json
-	var relativePath = path.join('.', path.relative(projectDir, packageDir));
-	// On Windows normalize path (i.e. convert \ to /)
-	var normalizedPath = normalize(relativePath);
-
+	var gitPath = _getGitPath(hookersDir);
 	var gitKey = 'alias.' + aliasName;
 	var gitVal = "'" + aliases[aliasName] + "'";
-	simpleGit(normalizedPath).addConfig(gitKey, gitVal);
+
+	if (debugMode) {
+		console.log("Creating Alias %s - %s", chalk.cyan(gitKey), chalk.underline(gitVal));
+	}
+
+	simpleGit(gitPath).addConfig(gitKey, gitVal);
 }
 
 function removeHook(dir, name) {
@@ -235,41 +253,22 @@ function removeHook(dir, name) {
 }
 
 function removeAlias(hookersDir, vcsAlias) {
-	// Assuming that this file is in node_modules/git-vcs
-	// var packageDir = path.join(hookersDir);
-	var packageDir = path.join(hookersDir, '..', '..');
-	// Get project directory
-	// When used in submodule, the project dir is the first .git that is found
-	var projectDir = findParentDir.sync(hookersDir, '.git');
-	// In order to support projects with package.json in a different directory
-	// than .git, find relative path from project directory to package.json
-	var relativePath = path.join('.', path.relative(projectDir, packageDir));
-	// On Windows normalize path (i.e. convert \ to /)
-	var normalizedPath = normalize(relativePath);
-
-	var gitKey = 'alias.' + aliasName;
-	simpleGit(normalizedPath).raw([
+	var gitPath = _getGitPath(hookersDir);
+	var gitKey = 'alias.' + vcsAlias;
+	simpleGit(gitPath).raw([
 		'config',
 		'--unset',
 		gitKey
 	]);
 }
 
-function installFrom(hookersDir) {
-	try {
-		/** Check if in Sub Module */
-		var isInSubNodeModule = (hookersDir.match(/node_modules/g) || []).length > 1
-		if (isInSubNodeModule) {
-			return console.log(
-				'Trying to install from sub \'node_module\' directory,',
-				'skipping Git-VCS installation'
-				);
-		}
-		installHooks(hookersDir);
-		installAliases(hookersDir);
-	} catch (e) {
-		console.error(e);
-	}
+function removeAliasSection(hookersDir) {
+	var gitPath = _getGitPath(hookersDir);
+	simpleGit(gitPath).raw([
+		'config',
+		'--remove-section',
+		'alias'
+	]);
 }
 
 function installHooks(hookersDir) {
@@ -292,12 +291,13 @@ function installAliases(hookersDir) {
 
 	if (gitAliases) {
 		var aliasKeys = getConfigAliasKeys();
-		if (gitAliases !== "No Alias Section Found")
+		if (gitAliases !== "No Alias Section Found") {
+			console.log("No Alias Section Found");
 			gitAliases = gitAliases.split('\n');
+		}
 
 		aliasKeys.forEach(function(vcsAlias) {
 			if (gitAliases === "No Alias Section Found") {
-				console.log("No Alias Section Found");
 				createAlias(hookersDir, vcsAlias);
 			} else {
 				var validAlias = true;
@@ -318,7 +318,7 @@ function installAliases(hookersDir) {
 				if (validAlias)
 					createAlias(hookersDir, vcsAlias);
 				else
-					console.log('Skipping ' + vcsAlias + ' Alias \t(existing user alias)');
+					console.log('Skipping Alias: ' + chalk.cyan(vcsAlias) + ' \t(existing user alias)');
 			}
 		});
 
@@ -328,25 +328,86 @@ function installAliases(hookersDir) {
 	}
 }
 
-function uninstallFrom(hookersDir) {
-	try {
-		var gitHooksDir = findHooksDir(hookersDir);
-		hooks.forEach(function(hookName) {
-			removeHook(gitHooksDir, hookName);
-		});
-		console.log('git-vcs hooks are done uninstalling\n');
+function uninstallHooks(hookersDir) {
+	var gitHooksDir = findHooksDir(hookersDir);
+	hooks.forEach(function(hookName) {
+		removeHook(gitHooksDir, hookName);
+	});
+	console.log(chalk.green.underline('\ngit-vcs hooks are done uninstalling\n'));
+}
 
-		var aliasKeys = getConfigAliasKeys();
-		aliasKeys.forEach(function(vcsAlias) {
-			removeAlias(hookersDir, vcsAlias);
-		});
-		console.log('git-vcs aliases are done uninstalling\n');
-	} catch (e) {
-		console.error(e);
-	}
+function uninstallAliases(hookersDir) {
+	var aliasKeys = getConfigAliasKeys();
+	aliasKeys.forEach(function(vcsAlias) {
+		removeAlias(hookersDir, vcsAlias);
+	});
+	console.log(chalk.green.underline('\ngit-vcs aliases are done uninstalling\n'));
 }
 
 module.exports = {
-	installFrom: installFrom,
-	uninstallFrom: uninstallFrom
+	installFrom: function(hookersDir, isDebug) {
+		/** Confirm if we are debugging */
+		confirmDebugMode(isDebug);
+		try {
+			/** Check if in Sub Module */
+			var isInSubNodeModule = (hookersDir.match(/node_modules/g) || []).length > 1
+			if (isInSubNodeModule) {
+				return console.log(
+					'Trying to install from sub \'node_module\' directory,',
+					'skipping Git-VCS installation'
+					);
+			}
+			installHooks(hookersDir);
+			installAliases(hookersDir);
+		} catch (e) {
+			console.error(e);
+		}
+	},
+	uninstallFrom: function(hookersDir, isDebug) {
+		/** Confirm if we are debugging */
+		confirmDebugMode(isDebug);
+		try {
+			uninstallHooks(hookersDir);
+			uninstallAliases(hookersDir);
+		} catch (e) {
+			console.error(e);
+		}
+	}
 };
+
+function _isWin() {
+	return /^win/.test(process.platform);
+}
+
+/**
+ * Returns a Normalized or Relative Parent Git Path
+ * @param   {[type]}  hookersDir  [description]
+ * @return  {[type]}              [description]
+ */
+function _getGitPath(hookersDir) {
+	var relativePath, packageDir, projectDir;
+
+	// Assuming that this file is in node_modules/git-vcs
+	packageDir = path.join(hookersDir, '..', '..');
+
+	// If in debugMode, then reapply the packageDir value to local
+	if (debugMode) {
+		packageDir = path.join(hookersDir);
+	}
+
+	// Get project directory
+	// When used in submodule, the project dir is the first .git that is found
+	projectDir = findParentDir.sync(hookersDir, '.git');
+
+	// In order to support projects with package.json in a different directory
+	// than .git, find relative path from project directory to package.json
+	relativePath = path.join('.', path.relative(projectDir, packageDir));
+
+	// On Windows normalize path (i.e. convert \ to /)
+	if (_isWin()) {
+		console.log(chalk.red.underline("Windows OS Detected"));
+		return normalize(relativePath);
+	}
+
+	return relativePath;
+}

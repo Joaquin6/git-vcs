@@ -14,4 +14,4 @@ if (isCI) {
 console.log('Setting up Git-VCS Hooks and Aliases\n');
 
 var gitvcsDir = path.join(__dirname, '..');
-gitvcs.installFrom(gitvcsDir, false);
+gitvcs.installFrom(gitvcsDir, true);
