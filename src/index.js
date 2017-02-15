@@ -236,7 +236,7 @@ function createHook(hookersDir, gitHooksDir, hookName, cmd) {
 function createAlias(hookersDir, aliasName) {
 	var gitPath = _getGitPath(hookersDir);
 	var gitKey = 'alias.' + aliasName;
-	var gitVal = "'" + aliases[aliasName] + "'";
+	var gitVal = aliases[aliasName];
 
 	if (debugMode) {
 		console.log("Creating Alias %s - %s", chalk.cyan(gitKey), chalk.underline(gitVal));
