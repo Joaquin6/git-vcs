@@ -1,6 +1,6 @@
 {
-  "name": "hookers",
-  "version": "1.0.3",
+  "name": "git-vcs",
+  "version": "1.1.0",
   "description": "Git hooks made easy",
   "main": "index.js",
   "devDependencies": {
@@ -16,7 +16,8 @@
     "find-parent-dir": "^0.3.0",
     "is-ci": "^1.0.9",
     "jsonfile": "^2.3.1",
-    "normalize-path": "^1.0.0"
+    "normalize-path": "^1.0.0",
+    "simple-git": "^1.66.0"
   },
   "scripts": {
     "install": "node ./bin/install.js",
@@ -26,7 +27,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Joaquin6/hookers.git"
+    "url": "git+https://github.com/Joaquin6/git-vcs.git"
   },
   "keywords": [
     "git",
@@ -47,9 +48,9 @@
   "author": "Joaquin Briceno <joaquinbriceno1@gmail.com>",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/Joaquin6/hookers/issues"
+    "url": "https://github.com/Joaquin6/git-vcs/issues"
   },
-  "homepage": "https://github.com/Joaquin6/hookers#readme",
+  "homepage": "https://github.com/Joaquin6/git-vcs#readme",
   "standard": {
     "env": {
       "mocha": true
