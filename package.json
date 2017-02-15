@@ -1,6 +1,6 @@
 {
   "name": "git-vcs",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "Git hooks made easy",
   "devDependencies": {
     "expect": "^1.20.2",
