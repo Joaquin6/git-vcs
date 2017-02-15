@@ -10,6 +10,9 @@ git config --remove-section alias
 
 # Set a bunch of aliases
 
+# Since I often edit aliases by hand, I have one that opens the gitconfig file with my default editor.
+git config alias.ec 'config --global -e'
+
 # Get my working directory up to date.
 # When I’m ready to start some work, I always do the work in a new branch.
 # But first, I make sure that my working directory is up to date with the origin
@@ -20,7 +23,7 @@ git config --remove-section alias
 # it’ll rebase them to come after the commits I pulled down. The --prune option removes
 # remote-tracking branches that no longer exist on the remote.
 # This combination is so common, I’ve created an alias up for this.
-git config alias.up '!git pull --rebase --prune $@ && git submodule update --init --recursive'
+git config alias.up '!git pull --rebase --prune $@ && git submodule update --init --recursive' 	#*****
 # Note that I’m combining two git commands together. I can use the ! prefix to execute everything
 # after it in the shell. This is why I needed to use the full git commands.
 # Using the ! prefix allows me to use any command and not just git commands in the alias.
@@ -29,23 +32,23 @@ git config alias.up '!git pull --rebase --prune $@ && git submodule update --ini
 # At this point, I can start some new work.
 # All new work starts in a branch so I would typically use `git checkout -b new-branch`.
 # However I alias this to cob to build upon co.
-git config alias.cob 'checkout -b'
+git config alias.cob 'checkout -b' 	#*****
 # Note that this simple alias is expanded in place.
 # So to create a branch named “emoji-completion” I simply type git cob emoji-completion
 # which expands to git checkout -b emoji-completion.
 # With this new branch, I can start writing the crazy codes. As I go along, I try and commit regularly with my cm alias.
-git config alias.cm '!git add -A && git commit -m'
+git config alias.cm '!git add -A && git commit -m' 	#*****
 # For example, git cm "Making stuff work". This adds all changes including untracked files to the index and then creates a
 # commit with the message “Making Stuff Work”.
 # Sometimes, I just want to save my work in a commit without having to think of a commit message.
 # I could stash it, but I prefer to write a proper commit which I will change later. git save or git wip.
 # The first one adds all changes including untracked files and creates a commit.
 # The second one only commits tracked changes. I generally use the first one.
-git config alias.save '!git add -A && git commit -m "SAVEPOINT"'
-git config alias.wip 'commit -am "WIP"'
+git config alias.save '!git add -A && git commit -m "SAVEPOINT"'	#*****
+git config alias.wip 'commit -am "WIP"'								#*****
 # When I return to work, I’ll just use git undo which resets the previous commit,
 # but keeps all the changes from that commit in the working directory.
-git config alias.undo 'reset HEAD~1 --mixed'
+git config alias.undo 'reset HEAD~1 --mixed'	#*****
 # Or, if I merely need to modify the previous commit, I’ll use git amend
 git config alias.amm 'commit --amend'		#*****
 git config alias.amend 'commit -a --amend' 	#*****
@@ -59,7 +62,7 @@ git config alias.amend 'commit -a --amend' 	#*****
 # Slap those people in the face. It’s a bad idea. Don’t do it!
 # That’s basically a delete of your current changes without any undo. As soon as you run that command, Murphy’s Law dictates you’ll suddenly remember there was that one gem among the refuse you don’t want to rewrite.
 # Too bad. If you reset work that you never committed it is gone for good. Hence, the wipe alias.
-git config alias.wipe '!git add -A && git commit -qm "WIPE SAVEPOINT" && git reset HEAD~1 --hard'
+git config alias.wipe '!git add -A && git commit -qm "WIPE SAVEPOINT" && git reset HEAD~1 --hard'	#*****
 # This commits everything in my working directory and then does a hard reset to remove that commit.
 # The nice thing is, the commit is still there, but it’s just unreachable.
 # Unreachable commits are a bit inconvenient to restore, but at least they are still there.
@@ -92,13 +95,10 @@ git config alias.s 'status -sb'		#*****
 git config alias.st 'status'		#*****
 
 
-git config alias.lline 'log --oneline -10'
-git config alias.count '!git log --all --oneline | wc -l'
-git config alias.gl1 'log -1 --name-status'
 git config alias.serve '!git daemon --reuseaddr --verbose  --base-path=.  --export-all ./.git'
 
 
-git config alias.mr "!sh -c 'git fetch $1 merge-requests/$2/head:mr-$1-$2 && git checkout mr-$1-$2' -"
+git config alias.mr '!sh -c "git fetch $1 merge-requests/$2/head:mr-$1-$2 && git checkout mr-$1-$2" -'
 git config alias.unstage 'reset HEAD --'
 git config alias.unmerged '!git ls-files --unmerged | cut -f2 | sort -u'
 git config alias.b 'rev-parse --abbrev-ref HEAD' 															#*****
@@ -115,28 +115,28 @@ git config alias.acm '!git add . && git commit -m'					#*****
 
 
 # alias for long listing each commit - lines added and removed
-git config alias.l "log --graph --all --pretty=format:'%C(yellow)%h%C(cyan)%d%Creset %s %C(white)- %an, %ar%Creset' --decorate --date=short"
-git config alias.ll "log --stat --abbrev-commit"
-# git config alias.ll "log --pretty=format:\"%C(yellow)%h%Cred%d %Creset%s %Cgreen(%cr) %C(bold blue)<%an>%Creset\" --numstat"
-git config alias.lg "log --color --graph --pretty=format:'%C(bold white)%h%Creset -%C(bold green)%d%Creset %s %C(bold green)(%cr)%Creset %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative"
-git config alias.llg "log --color --graph --pretty=format:'%C(bold white)%H %d%Creset%n%s%n%+b%C(bold blue)%an <%ae>%Creset %C(bold green)%cr (%ci)' --abbrev-commit"
-git config alias.graph "log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative"
+git config alias.l 'log --graph --all --pretty=format:"%C(yellow)%h%C(cyan)%d%Creset %s %C(white)- %an, %ar%Creset" --decorate --date=short' #*****
+git config alias.ll 'log --stat --abbrev-commit' #*****
+git config alias.lg 'log --color --graph --pretty=format:"%C(bold white)%h%Creset -%C(bold green)%d%Creset %s %C(bold green)(%cr)%Creset %C(bold blue)<%an>%Creset" --abbrev-commit --date=relative' #*****
+git config alias.lgg 'log --pretty=format:"%C(yellow)%h%Cred%d %Creset%s %Cgreen(%cr) %C(bold blue)<%an>%Creset" --numstat'
+git config alias.llg 'log --color --graph --pretty=format:"%C(bold white)%H %d%Creset%n%s%n%+b%C(bold blue)%an <%ae>%Creset %C(bold green)%cr (%ci)" --abbrev-commit' #*****
+git config alias.graph 'log --graph --pretty=format:"%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset" --abbrev-commit --date=relative' #*****
+git config alias.lline 'log --oneline -10' #*****
+git config alias.count '!git log --all --oneline | wc -l' #*****
+git config alias.gl1 'log -1 --name-status'
+
+git config alias.d 'diff' 					#*****
+git config alias.master 'checkout master' 	#*****
+git config alias.qa 'checkout qa' 			#*****
+git config alias.alias '!git config --list | grep "alias\." | sed "s/alias\.\([^=]*\)=\(.*\)/\1\	 => \2/" | sort' 	#*****
 
 
-git config alias.d 'diff'
-git config alias.master 'checkout master'
-git config alias.qa 'checkout qa'
-git config alias.spull 'svn rebase'
-git config alias.spush 'svn dcommit'
-git config alias.alias "!git config --list | grep 'alias\.' | sed 's/alias\.\([^=]*\)=\(.*\)/\1\	 => \2/' | sort"
-
-
-git config alias.path "rev-parse --show-toplevel"
-git config alias.abandon "reset --hard" 			#*****
+git config alias.path 'rev-parse --show-toplevel' 	#*****
+git config alias.abandon 'reset --hard' 			#*****
 
 
 # Grep from root folder
-git config alias.gra '!f() { A=$(pwd) && TOPLEVEL=$(git rev-parse --show-toplevel) && cd $TOPLEVEL && git grep --full-name -In "$1" | xargs -I{} echo $TOPLEVEL/{} && cd $A; }; `f`'
+git config alias.gra '!f() { A=$(pwd) && TOPLEVEL=$(git rev-parse --show-toplevel) && cd $TOPLEVEL && git grep --full-name -In "$1" | xargs -I{} echo $TOPLEVEL/{} && cd $A; }; `f`' #*****
 
 
 # In some of my workflows I wanted to quickly rename branches prepending done- to their names.
@@ -151,7 +151,7 @@ git config alias.addconflicted '!f() { git ls-files --unmerged | cut -f2 | sort 
 
 
 git config alias.assume 'update-index --assume-unchanged' 		#*****
-git config alias.unassume 'update-index --no-assume-unchanged'
+git config alias.unassume 'update-index --no-assume-unchanged'	#*****
 
 
 git config --global alias.visual '!gitk'

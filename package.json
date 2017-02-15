@@ -2,7 +2,6 @@
   "name": "git-vcs",
   "version": "1.1.0",
   "description": "Git hooks made easy",
-  "main": "index.js",
   "devDependencies": {
     "expect": "^1.20.2",
     "mocha": "^3.2.0",
@@ -23,7 +22,9 @@
     "install": "node ./bin/install.js",
     "precommit": "npm test",
     "test": "mocha && standard",
-    "uninstall": "node ./bin/uninstall.js"
+    "uninstall": "node ./bin/uninstall.js",
+    "install-debug": "node ./bin/install-debug.js",
+    "uninstall-debug": "node ./bin/uninstall-debug.js"
   },
   "repository": {
     "type": "git",
