@@ -1,7 +1,10 @@
 var fs = require('fs');
 var path = require('path');
+var chalk = require('chalk');
+var simpleGit = require('simple-git');
 var normalize = require('normalize-path');
 var findParentDir = require('find-parent-dir');
+var aliases = require('./aliases.json');
 var hooks = require('./hooks.json');
 var pkg = require('../package.json');
 
@@ -13,6 +16,14 @@ function write(filename, data) {
 function isGitvcsHook(filename) {
 	var data = fs.readFileSync(filename, 'utf-8')
 	return data.indexOf('#husky') !== -1
+}
+
+function getConfigAliasKeys() {
+	var keys = [];
+	for (var key in aliases) {
+		keys.push(key);
+	}
+	return keys;
 }
 
 function isGhooks(filename) {
@@ -27,12 +38,12 @@ function isGhooks(filename) {
  * @param   {[type]}  dirname  [description]
  * @return  {[type]}           [description]
  */
- function findHooksDir(dirname) {
- 	var dir = findParentDir.sync(dirname, '.git');
- 	if (dir) {
- 		var gitDir = path.join(dir, '.git');
- 		var stats = fs.lstatSync(gitDir);
- 		if (stats.isFile()) {
+function findHooksDir(dirname) {
+	var dir = findParentDir.sync(dirname, '.git');
+	if (dir) {
+		var gitDir = path.join(dir, '.git');
+		var stats = fs.lstatSync(gitDir);
+		if (stats.isFile()) {
 			// Expect following format
 			// git: pathToGit
 			gitDir = fs.readFileSync(gitDir, 'utf-8').split(':')[1].trim();
@@ -40,6 +51,26 @@ function isGhooks(filename) {
 		}
 		return path.join(gitDir, 'hooks');
 	}
+	return null;
+}
+
+function findAliases(dirname) {
+	var dir = findParentDir.sync(dirname, '.git');
+	if (dir) {
+		var gitDir = path.join(dir, '.git');
+		var gitConfig = path.join(gitDir, 'config');
+		var stats = fs.lstatSync(gitConfig);
+		if (stats.isFile()) {
+			// Expect following format
+			// git: pathToGit
+
+			gitConfig = fs.readFileSync(gitConfig, 'utf-8');
+			if (gitConfig.includes("[alias]"))
+				return gitConfig.split('[alias]')[1].trim();
+			return "No Alias Section Found";
+		}
+	}
+	return null;
 }
 
 function getHookScript(hookName, relativePath, cmd) {
@@ -175,7 +206,25 @@ function createHook(hookersDir, gitHooksDir, hookName, cmd) {
 		return write(filename, hookScript);
 	}
 
-	console.log('skipping ' + hookName + ' hook (existing user hook)');
+	console.log('Skipping ' + hookName + ' hook (existing user hook)');
+}
+
+function createAlias(hookersDir, aliasName) {
+	// Assuming that this file is in node_modules/git-vcs
+	// var packageDir = path.join(hookersDir);
+	var packageDir = path.join(hookersDir, '..', '..');
+	// Get project directory
+	// When used in submodule, the project dir is the first .git that is found
+	var projectDir = findParentDir.sync(hookersDir, '.git');
+	// In order to support projects with package.json in a different directory
+	// than .git, find relative path from project directory to package.json
+	var relativePath = path.join('.', path.relative(projectDir, packageDir));
+	// On Windows normalize path (i.e. convert \ to /)
+	var normalizedPath = normalize(relativePath);
+
+	var gitKey = 'alias.' + aliasName;
+	var gitVal = "'" + aliases[aliasName] + "'";
+	simpleGit(normalizedPath).addConfig(gitKey, gitVal);
 }
 
 function removeHook(dir, name) {
@@ -185,28 +234,97 @@ function removeHook(dir, name) {
 	}
 }
 
+function removeAlias(hookersDir, vcsAlias) {
+	// Assuming that this file is in node_modules/git-vcs
+	// var packageDir = path.join(hookersDir);
+	var packageDir = path.join(hookersDir, '..', '..');
+	// Get project directory
+	// When used in submodule, the project dir is the first .git that is found
+	var projectDir = findParentDir.sync(hookersDir, '.git');
+	// In order to support projects with package.json in a different directory
+	// than .git, find relative path from project directory to package.json
+	var relativePath = path.join('.', path.relative(projectDir, packageDir));
+	// On Windows normalize path (i.e. convert \ to /)
+	var normalizedPath = normalize(relativePath);
+
+	var gitKey = 'alias.' + aliasName;
+	simpleGit(normalizedPath).raw([
+		'config',
+		'--unset',
+		gitKey
+	]);
+}
+
 function installFrom(hookersDir) {
 	try {
+		/** Check if in Sub Module */
 		var isInSubNodeModule = (hookersDir.match(/node_modules/g) || []).length > 1
 		if (isInSubNodeModule) {
 			return console.log(
 				'Trying to install from sub \'node_module\' directory,',
-				'skipping Git hooks installation'
+				'skipping Git-VCS installation'
 				);
 		}
-
-		var gitHooksDir = findHooksDir(hookersDir);
-		if (gitHooksDir) {
-			hooks.forEach(function(hookName) {
-				var npmScriptName = hookName.replace(/-/g, '');
-				createHook(hookersDir, gitHooksDir, hookName, npmScriptName);
-			});
-			console.log('done\n');
-		} else {
-			console.log('Can\'t find .git directory, skipping Git hooks installation');
-		}
+		installHooks(hookersDir);
+		installAliases(hookersDir);
 	} catch (e) {
 		console.error(e);
+	}
+}
+
+function installHooks(hookersDir) {
+	/** Now Attempt to install Hooks */
+	var gitHooksDir = findHooksDir(hookersDir);
+	if (gitHooksDir) {
+		hooks.forEach(function(hookName) {
+			var npmScriptName = hookName.replace(/-/g, '');
+			createHook(hookersDir, gitHooksDir, hookName, npmScriptName);
+		});
+		console.log(chalk.green.underline('\ngit-vcs hooks are done installing\n'));
+	} else {
+		console.log('Can\'t find .git directory, skipping Git-VCS installation');
+	}
+}
+
+function installAliases(hookersDir) {
+	/** Now Attempt to install Aliases */
+	var gitAliases = findAliases(hookersDir);
+
+	if (gitAliases) {
+		var aliasKeys = getConfigAliasKeys();
+		if (gitAliases !== "No Alias Section Found")
+			gitAliases = gitAliases.split('\n');
+
+		aliasKeys.forEach(function(vcsAlias) {
+			if (gitAliases === "No Alias Section Found") {
+				console.log("No Alias Section Found");
+				createAlias(hookersDir, vcsAlias);
+			} else {
+				var validAlias = true;
+				for (var x = 0; x < gitAliases.length; x++) {
+					var userAlias = gitAliases[x];
+					if (!userAlias)
+						continue;
+
+					userAlias = userAlias.replace(/(^\t|\n)/g, '').trim();
+					userAlias = userAlias.split(" = ")[0];
+
+					if (userAlias === vcsAlias) {
+						validAlias = false;
+						break;
+					}
+				}
+
+				if (validAlias)
+					createAlias(hookersDir, vcsAlias);
+				else
+					console.log('Skipping ' + vcsAlias + ' Alias \t(existing user alias)');
+			}
+		});
+
+		console.log(chalk.green.underline('\ngit-vcs aliases are done installing\n'));
+	} else {
+		console.log('Can\'t find .git config file, skipping Git-VCS installation');
 	}
 }
 
@@ -216,7 +334,13 @@ function uninstallFrom(hookersDir) {
 		hooks.forEach(function(hookName) {
 			removeHook(gitHooksDir, hookName);
 		});
-		console.log('done\n');
+		console.log('git-vcs hooks are done uninstalling\n');
+
+		var aliasKeys = getConfigAliasKeys();
+		aliasKeys.forEach(function(vcsAlias) {
+			removeAlias(hookersDir, vcsAlias);
+		});
+		console.log('git-vcs aliases are done uninstalling\n');
 	} catch (e) {
 		console.error(e);
 	}

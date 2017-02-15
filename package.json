@@ -16,7 +16,8 @@
     "find-parent-dir": "^0.3.0",
     "is-ci": "^1.0.9",
     "jsonfile": "^2.3.1",
-    "normalize-path": "^1.0.0"
+    "normalize-path": "^1.0.0",
+    "simple-git": "^1.66.0"
   },
   "scripts": {
     "install": "node ./bin/install.js",
